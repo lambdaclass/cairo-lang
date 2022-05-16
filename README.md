@@ -58,3 +58,8 @@ Once the docker image is built, you can fetch the python package zip file using:
 > docker rm -v ${container_id}
 ```
 
+--
+
+## Running the dissasembler
+
+Run with python `python(3) disassembler.py file` where the file comntains whatever cairo assembly code you want to run
