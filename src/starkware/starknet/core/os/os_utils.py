@@ -45,13 +45,13 @@ def update_builtin_pointers(
 
 
 def prepare_os_context(runner: CairoFunctionRunner) -> List[MaybeRelocatable]:
-    syscall_segment = runner.segments.add()
+    syscall_segment = runner.add_segment()
     os_context: List[MaybeRelocatable] = [syscall_segment]
 
-    for builtin in runner.program.builtins:
-        builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
-        os_context.extend(builtin_runner.initial_stack())
-
+    # for builtin in runner.program.builtins:
+    #     builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
+    #     os_context.extend(builtin_runner.initial_stack())
+    os_context.extend(runner.get_builtins_initial_stack())
     return os_context
 
 

@@ -41,6 +41,7 @@ from starkware.starkware_utils.error_handling import (
     stark_assert,
     wrap_with_stark_exception,
 )
+import cairo_rs_py
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +183,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Run the specified contract entry point with given calldata.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(program=contract_class.program, layout="all")
+            runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint="get_balance", layout="all", proof_mode=False)
         os_context = os_utils.prepare_os_context(runner=runner)
 
         validate_contract_deployed(state=state, contract_address=self.contract_address)
@@ -205,24 +206,25 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             os_context,
             len(self.calldata),
             # Allocate and mark the segment as read-only (to mark every input array as read-only).
-            syscall_handler._allocate_segment(segments=runner.segments, data=self.calldata),
+            syscall_handler._allocate_segment(segments=runner.segments(), data=self.calldata),
         ]
 
         try:
+            runner.initialize_segments()
             runner.run_from_entrypoint(
                 entry_point.offset,
-                *entry_points_args,
-                hint_locals={
-                    "syscall_handler": syscall_handler,
-                },
-                static_locals={
-                    "__find_element_max_size": 2**20,
-                    "__squash_dict_max_size": 2**20,
-                    "__keccak_max_size": 2**20,
-                    "__usort_max_size": 2**20,
-                    "__chained_ec_op_max_len": 1000,
-                },
-                run_resources=tx_execution_context.run_resources,
+                entry_points_args,
+                # hint_locals={
+                #     "syscall_handler": syscall_handler,
+                # },
+                # static_locals={
+                #     "__find_element_max_size": 2**20,
+                #     "__squash_dict_max_size": 2**20,
+                #     "__keccak_max_size": 2**20,
+                #     "__usort_max_size": 2**20,
+                #     "__chained_ec_op_max_len": 1000,
+                # },
+                # run_resources=tx_execution_context.run_resources,
                 verify_secure=True,
             )
         except VmException as exception:
