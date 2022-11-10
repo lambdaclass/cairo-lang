@@ -589,8 +589,12 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
     def _allocate_segment(
         self, segments: MemorySegmentManager, data: Iterable[MaybeRelocatable]
     ) -> RelocatableValue:
-        segment_start = segments.add()
+        # FIXME: Here "segments" in really a Runner under the hood.
+        # May want to change the variable names.
+        segment_start = segments.add_segment()
+        print("SEGMENT START: ", segment_start)
         segment_end = segments.write_arg(ptr=segment_start, arg=data)
+        print("SEGMENT end: ", segment_end)
         self.read_only_segments.append((segment_start, segment_end - segment_start))
         return segment_start
 

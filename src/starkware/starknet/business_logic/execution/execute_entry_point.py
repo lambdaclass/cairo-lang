@@ -184,6 +184,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         # Run the specified contract entry point with given calldata.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
             runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint="get_balance", layout="all", proof_mode=False)
+            runner.initialize_function_runner()
         os_context = os_utils.prepare_os_context(runner=runner)
 
         validate_contract_deployed(state=state, contract_address=self.contract_address)
@@ -206,11 +207,15 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             os_context,
             len(self.calldata),
             # Allocate and mark the segment as read-only (to mark every input array as read-only).
-            syscall_handler._allocate_segment(segments=runner.segments(), data=self.calldata),
+            syscall_handler._allocate_segment(segments=runner, data=self.calldata),
         ]
 
+        print("ENTRY POINT SELECTOR: ", self.entry_point_selector)
+        print("OS CONTEXT: ", os_context)
+        print("LEN CALLDATA: ", len(self.calldata))
+        # print("ALLOCATE SEGMENT: ", syscall_handler._allocate_segment(segments=runner, data=self.calldata))
+
         try:
-            runner.initialize_segments()
             runner.run_from_entrypoint(
                 entry_point.offset,
                 entry_points_args,

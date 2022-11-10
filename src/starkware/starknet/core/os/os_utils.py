@@ -51,7 +51,10 @@ def prepare_os_context(runner: CairoFunctionRunner) -> List[MaybeRelocatable]:
     # for builtin in runner.program.builtins:
     #     builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
     #     os_context.extend(builtin_runner.initial_stack())
-    os_context.extend(runner.get_builtins_initial_stack())
+    # os_context.extend(runner.get_builtins_initial_stack())
+    for (builtin, reloc) in runner.get_builtins_initial_stack():
+        os_context.extend(reloc)
+
     return os_context
 
 
