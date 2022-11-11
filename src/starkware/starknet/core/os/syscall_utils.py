@@ -906,10 +906,11 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
         Validates that there were no out of bounds writes to read-only segments and marks
         them as accessed.
         """
-        segments = runner.segments
+        # segments = runner.segments
+        segments = runner
 
         for segment_ptr, segment_size in self.read_only_segments:
-            used_size = segments.get_segment_used_size(segment_index=segment_ptr.segment_index)
+            used_size = segments.get_segment_used_size(index=segment_ptr.segment_index)
             stark_assert(
                 used_size == segment_size,
                 code=StarknetErrorCode.SECURITY_ERROR,

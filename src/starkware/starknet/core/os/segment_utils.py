@@ -67,7 +67,7 @@ def validate_segment_pointers(
     ), f"Segment base pointer must be zero; got {segment_base_ptr.offset}."
 
     expected_stop_ptr = segment_base_ptr + segments.get_segment_used_size(
-        segment_index=segment_base_ptr.segment_index
+        index=segment_base_ptr.segment_index
     )
 
     stark_assert(

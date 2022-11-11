@@ -157,7 +157,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             retdata=get_return_values(runner=runner),
         )
 
-    def _run(
+     def _run(
         self,
         state: SyncState,
         resources_manager: ExecutionResourcesManager,
@@ -219,9 +219,9 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             runner.run_from_entrypoint(
                 entry_point.offset,
                 entry_points_args,
-                # hint_locals={
-                #     "syscall_handler": syscall_handler,
-                # },
+                hint_locals={
+                    "syscall_handler": syscall_handler,
+                },
                 # static_locals={
                 #     "__find_element_max_size": 2**20,
                 #     "__squash_dict_max_size": 2**20,
@@ -274,11 +274,11 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         )
 
         # When execution starts the stack holds entry_points_args + [ret_fp, ret_pc].
-        args_ptr = runner.initial_fp - (len(entry_points_args) + 2)
+        args_ptr = runner.get_initial_fp() - (len(entry_points_args) + 2)
 
         # The arguments are touched by the OS and should not be counted as holes, mark them
         # as accessed.
-        assert isinstance(args_ptr, RelocatableValue)  # Downcast.
+        # assert isinstance(args_ptr, RelocatableValue)  # Downcast.
         runner.mark_as_accessed(address=args_ptr, size=len(entry_points_args))
 
         return runner, syscall_handler

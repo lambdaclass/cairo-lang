@@ -51,12 +51,9 @@ def prepare_os_context(runner: CairoFunctionRunner) -> List[MaybeRelocatable]:
     # for builtin in runner.program.builtins:
     #     builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
     #     os_context.extend(builtin_runner.initial_stack())
-    # os_context.extend(runner.get_builtins_initial_stack())
-    for (builtin, reloc) in runner.get_builtins_initial_stack():
-        os_context.extend(reloc)
+    os_context.extend(runner.get_program_builtins_initial_stack())
 
     return os_context
-
 
 def validate_and_process_os_context(
     runner: CairoFunctionRunner,
@@ -68,13 +65,15 @@ def validate_and_process_os_context(
     Returns the syscall processor object containing the accumulated syscall information.
     """
     # The returned values are os_context, retdata_size, retdata_ptr.
-    os_context_end = runner.vm.run_context.ap - 2
+    os_context_end = runner.get_ap() - 2
     stack_ptr = os_context_end
-    for builtin in runner.program.builtins[::-1]:
-        builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
+    print("STACK PTR: ", stack_ptr)
+    # for builtin in runner.program.builtins[::-1]:
+    #     builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
 
-        with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            stack_ptr = builtin_runner.final_stack(runner=runner, pointer=stack_ptr)
+    #     with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
+    #         stack_ptr = builtin_runner.final_stack(runner=runner, pointer=stack_ptr)
+    stack_ptr = runner.get_builtins_final_stack(stack_ptr)
 
     final_os_context_ptr = stack_ptr - 1
     assert final_os_context_ptr + len(initial_os_context) == os_context_end
@@ -85,7 +84,7 @@ def validate_and_process_os_context(
     )
 
     segment_utils.validate_segment_pointers(
-        segments=runner.segments,
+        segments=runner,
         segment_base_ptr=syscall_base_ptr,
         segment_stop_ptr=syscall_stop_ptr,
     )
