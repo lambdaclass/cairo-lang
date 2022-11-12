@@ -61,7 +61,7 @@ def validate_segment_pointers(
     segment_base_ptr: MaybeRelocatable,
     segment_stop_ptr: MaybeRelocatable,
 ):
-    assert isinstance(segment_base_ptr, RelocatableValue)
+    # assert isinstance(segment_base_ptr, RelocatableValue)
     assert (
         segment_base_ptr.offset == 0
     ), f"Segment base pointer must be zero; got {segment_base_ptr.offset}."
