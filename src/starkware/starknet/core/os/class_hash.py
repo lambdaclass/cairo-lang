@@ -91,6 +91,7 @@ def compute_class_hash_inner(
 
     run_function_runner(
         runner,
+        program,
         "starkware.starknet.core.os.contracts.class_hash",
         hash_ptr=hash_builtin.base,
         contract_class=contract_class_struct,
@@ -202,6 +203,7 @@ def get_contract_class_struct(
 
 def run_function_runner(
         runner,
+        program,
         func_name: str,
         *args,
         hint_locals: Optional[Dict[str, Any]] = None,
@@ -230,11 +232,11 @@ def run_function_runner(
         verify_implicit_args_segment - For each implicit argument, verify that the argument and the
           return value are in the same segment.
         """
-        assert isinstance(runner.program, Program) #Se va
-        entrypoint = runner.program.get_label(func_name, full_name_lookup=use_full_name) #Hacemos método CairoRunner::get_program_label()
+        assert isinstance(program, Program)
+        entrypoint = program.get_label(func_name, full_name_lookup=use_full_name)
 
         #Construct Fu
-        structs_factory = CairoStructFactory.from_program(program=runner.program)
+        structs_factory = CairoStructFactory.from_program(program=program)
         func = ScopedName.from_string(scope=func_name)
 
         full_args_struct = structs_factory.build_func_args(func=func)
