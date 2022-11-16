@@ -157,7 +157,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             retdata=get_return_values(runner=runner),
         )
 
-     def _run(
+    def _run(
         self,
         state: SyncState,
         resources_manager: ExecutionResourcesManager,
