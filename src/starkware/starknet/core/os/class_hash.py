@@ -85,13 +85,14 @@ def compute_class_hash_inner(
 
     runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint=None, layout="all", proof_mode=False)
     runner.initialize_function_runner()
+    hash_ptr = runner.add_additional_hash_builtin()
 
 
     run_function_runner(
         runner,
         program,
         "starkware.starknet.core.os.contracts.class_hash",
-        hash_ptr=runner.add_segment(),
+        hash_ptr=hash_ptr,
         contract_class=contract_class_struct,
         use_full_name=True,
         verify_secure=False,
