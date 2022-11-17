@@ -8,6 +8,7 @@ from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cachetools
+import cairo_rs_py
 
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.common.structs import CairoStructFactory, CairoStructProxy
@@ -81,19 +82,16 @@ def compute_class_hash_inner(
     contract_class_struct = get_contract_class_struct(
         identifiers=program.identifiers, contract_class=contract_class
     )
-    runner = CairoFunctionRunner(program)
 
-    hash_builtin = HashBuiltinRunner(
-        name="custom_hasher", included=True, ratio=32, hash_func=hash_func
-    )
-    runner.builtin_runners["hash_builtin"] = hash_builtin
-    hash_builtin.initialize_segments(runner)
+    runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint=None, layout="all", proof_mode=False)
+    runner.initialize_function_runner()
+
 
     run_function_runner(
         runner,
         program,
         "starkware.starknet.core.os.contracts.class_hash",
-        hash_ptr=hash_builtin.base,
+        hash_ptr=runner.add_segment(),
         contract_class=contract_class_struct,
         use_full_name=True,
         verify_secure=False,
@@ -268,14 +266,14 @@ Got {type(ex).__name__} exception during the execution of {func_name}:
         n_explicit_ret_vals = structs_factory.get_explicit_return_values_length(func=func)
         n_ret_vals = n_explicit_ret_vals + n_implicit_ret_vals
         implicit_retvals = tuple(
-            runner.vm_memory.get_range(
-                addr=runner.vm.run_context.ap - n_ret_vals, size=n_implicit_ret_vals
+            runner.get_range(
+                runner.get_ap() - n_ret_vals, n_implicit_ret_vals
             )
         )
 
         explicit_retvals = tuple(
-            runner.vm_memory.get_range(
-                addr=runner.vm.run_context.ap - n_explicit_ret_vals, size=n_explicit_ret_vals
+            runner.get_range(
+                runner.get_ap() - n_explicit_ret_vals, n_explicit_ret_vals
             )
         )
 
