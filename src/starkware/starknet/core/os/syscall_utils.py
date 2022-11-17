@@ -635,10 +635,10 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
         args_struct_def: StructDefinition = syscall_info.syscall_request_struct.struct_definition_
         for arg, (arg_name, arg_def) in safe_zip(request, args_struct_def.members.items()):
             expected_type = get_runtime_type(arg_def.cairo_type)
-            assert isinstance(arg, expected_type), (
-                f"Argument {arg_name} to syscall {syscall_name} is of unexpected type. "
-                f"Expected: value of type {expected_type}; got: {arg}."
-            )
+            # assert isinstance(arg, expected_type), (
+            #     f"Argument {arg_name} to syscall {syscall_name} is of unexpected type. "
+            #     f"Expected: value of type {expected_type}; got: {arg}."
+            # )
 
         return request
 
