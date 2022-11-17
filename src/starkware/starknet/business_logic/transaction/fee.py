@@ -67,9 +67,9 @@ def calculate_l1_gas_by_cairo_usage(
     """
     cairo_resource_fee_weights = general_config.cairo_resource_fee_weights
     cairo_resource_names = set(cairo_resource_usage.keys())
-    assert cairo_resource_names.issubset(
-        cairo_resource_fee_weights.keys()
-    ), "Cairo resource names must be contained in fee weights dict."
+    # assert cairo_resource_names.issubset(
+    #     cairo_resource_fee_weights.keys()
+    # ), "Cairo resource names must be contained in fee weights dict."
 
     # Convert Cairo usage to L1 gas usage.
     cairo_l1_gas_usage = max(

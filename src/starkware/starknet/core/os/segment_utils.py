@@ -21,10 +21,10 @@ def get_os_segment_ptr_range(
     ), f"Illegal OS ptr offset; must be one of: {allowed_offsets}."
 
     # The returned values are os_context, retdata_size, retdata_ptr.
-    os_context_end = runner.vm.run_context.ap - 2
+    os_context_end = runner.get_ap() - 2
     final_os_context_ptr = os_context_end - len(os_context)
 
-    return os_context[ptr_offset], runner.vm_memory[final_os_context_ptr + ptr_offset]
+    return os_context[ptr_offset], runner.get(final_os_context_ptr + ptr_offset)
 
 
 def get_os_segment_stop_ptr(
@@ -67,8 +67,7 @@ def validate_segment_pointers(
     ), f"Segment base pointer must be zero; got {segment_base_ptr.offset}."
 
     expected_stop_ptr = segment_base_ptr + segments.get_segment_used_size(
-        index=segment_base_ptr.segment_index
-    )
+        index=segment_base_ptr.segment_index)
 
     stark_assert(
         expected_stop_ptr == segment_stop_ptr,

@@ -183,7 +183,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Run the specified contract entry point with given calldata.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint="get_balance", layout="all", proof_mode=False)
+            runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint=None, layout="all", proof_mode=False)
             runner.initialize_function_runner()
         os_context = os_utils.prepare_os_context(runner=runner)
 

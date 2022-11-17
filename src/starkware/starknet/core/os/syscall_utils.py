@@ -458,7 +458,6 @@ class SysCallHandlerBase(ABC):
     ) -> List[int]:
         """
         Returns the call retdata.
-
         syscall_name can be "call_contract", "delegate_call", "delegate_l1_handler", "library_call"
         or "library_call_l1_handler".
         """
@@ -591,7 +590,10 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
     ) -> RelocatableValue:
         # FIXME: Here "segments" in really a Runner under the hood.
         # May want to change the variable names.
-        segment_start = segments.add_segment()
+        try: 
+            segment_start = segments.add_segment()
+        except:
+            segment_start = segments.add()
         print("SEGMENT START: ", segment_start)
         segment_end = segments.write_arg(ptr=segment_start, arg=data)
         print("SEGMENT end: ", segment_end)
@@ -1046,7 +1048,6 @@ class OsSysCallHandler(SysCallHandlerBase):
     def start_tx(self, tx_info_ptr: RelocatableValue):
         """
         Called when starting the execution of a transaction.
-
         'tx_info_ptr' is a pointer to the TxInfo struct corresponding to said transaction.
         """
         assert self.tx_info_ptr is None
