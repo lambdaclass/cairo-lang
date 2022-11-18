@@ -83,7 +83,7 @@ def compute_class_hash_inner(
         identifiers=program.identifiers, contract_class=contract_class
     )
 
-    runner = cairo_rs_py.CairoRunner(program=contract_class.program.dumps(), entrypoint=None, layout="all", proof_mode=False)
+    runner = cairo_rs_py.CairoRunner(program=program.dumps(), entrypoint=None, layout="all", proof_mode=False)
     runner.initialize_function_runner()
     hash_ptr = runner.add_additional_hash_builtin()
 
