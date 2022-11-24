@@ -1493,7 +1493,7 @@ async def main():
         "tx_status": tx_status,
     }
     parser = argparse.ArgumentParser(description="A tool to communicate with StarkNet.")
-    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__} (with cairo-rs-py)")
     parser.add_argument("--network", type=str, help="The name of the StarkNet network.")
     parser.add_argument(
         "--network_id",

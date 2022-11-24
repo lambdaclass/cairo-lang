@@ -33,7 +33,7 @@ def main():
     start_time = time.time()
 
     parser = argparse.ArgumentParser(description="A tool to run Cairo programs.")
-    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__} (with cairo-rs-py)")
     parser.add_argument(
         "--program",
         type=argparse.FileType("r"),
