@@ -590,13 +590,15 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
     ) -> RelocatableValue:
         # FIXME: Here "segments" in really a Runner under the hood.
         # May want to change the variable names.
+
+        # CAIRO-RS VERSION
         try: 
             segment_start = segments.add_segment()
+        # ORIGINAL VERSION
         except:
             segment_start = segments.add()
-        print("SEGMENT START: ", segment_start)
+
         segment_end = segments.write_arg(ptr=segment_start, arg=data)
-        print("SEGMENT end: ", segment_end)
         self.read_only_segments.append((segment_start, segment_end - segment_start))
         return segment_start
 
@@ -908,11 +910,20 @@ class BusinessLogicSysCallHandler(SysCallHandlerBase):
         Validates that there were no out of bounds writes to read-only segments and marks
         them as accessed.
         """
-        # segments = runner.segments
-        segments = runner
+        # ORIGINAL VERSION
+        try: 
+            segments = runner.segments
+        # CAIRO-RS VERSION
+        except:
+            segments = runner
 
         for segment_ptr, segment_size in self.read_only_segments:
-            used_size = segments.get_segment_used_size(index=segment_ptr.segment_index)
+            # CAIRO-RS VERSION
+            try:
+                used_size = segments.get_segment_used_size(index=segment_ptr.segment_index)
+            # ORIGINAL VERSION
+            except: 
+                used_size = segments.get_segment_used_size(segment_index=segment_ptr.segment_index)
             stark_assert(
                 used_size == segment_size,
                 code=StarknetErrorCode.SECURITY_ERROR,

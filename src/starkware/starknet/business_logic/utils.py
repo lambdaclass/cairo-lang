@@ -48,7 +48,14 @@ def get_return_values(runner: CairoFunctionRunner) -> List[int]:
         exception_types=[Exception],
     ):
         ret_data_size, ret_data_ptr = runner.get_return_values(2)
-        values = runner.get_range(ret_data_ptr, ret_data_size)
+
+        try: 
+            # CAIRO-RS VERSION
+            values = runner.get_range(ret_data_ptr, ret_data_size)
+        except:
+            # ORIGINAL VERSION
+            values = runner.memory.get_range(ret_data_ptr, ret_data_size)
+
 
     stark_assert(
         all(isinstance(value, int) for value in values),
