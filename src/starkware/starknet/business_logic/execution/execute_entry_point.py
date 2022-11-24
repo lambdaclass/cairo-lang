@@ -210,11 +210,6 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             syscall_handler._allocate_segment(segments=runner, data=self.calldata),
         ]
 
-        print("ENTRY POINT SELECTOR: ", self.entry_point_selector)
-        print("OS CONTEXT: ", os_context)
-        print("LEN CALLDATA: ", len(self.calldata))
-        # print("ALLOCATE SEGMENT: ", syscall_handler._allocate_segment(segments=runner, data=self.calldata))
-
         try:
             runner.run_from_entrypoint(
                 entry_point.offset,
