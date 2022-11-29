@@ -3,9 +3,11 @@ import dataclasses
 import itertools
 import json
 import os
+import math
 from contextvars import ContextVar
 from functools import lru_cache
 from typing import Callable, List, Optional
+from starkware.cairo.lang.vm.cairo_run import write_binary_memory
 
 import cachetools
 
@@ -92,6 +94,10 @@ def compute_class_hash_inner(
         use_full_name=True,
         verify_secure=False,
     )
+    f = open("memory_files/class_hash.memory", "wb")
+    field_bytes = math.ceil(program.prime.bit_length() / 8)
+    runner.relocate()
+    write_binary_memory(f, runner.relocated_memory, field_bytes)
     _, class_hash = runner.get_return_values(2)
     return class_hash
 
