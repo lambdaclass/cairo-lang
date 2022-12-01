@@ -98,6 +98,7 @@ def compute_class_hash_inner(
         verify_secure=False,
     )
     _, class_hash = runner.get_return_values(2)
+    runner.relocate()
     runner.write_binary_memory("memory_files/class_hash.rs.memory")
     runner.write_binary_trace("trace_files/class_hash.rs.trace")
     return class_hash

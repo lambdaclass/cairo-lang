@@ -275,6 +275,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         # as accessed.
         # assert isinstance(args_ptr, RelocatableValue)  # Downcast.
         runner.mark_as_accessed(address=args_ptr, size=len(entry_points_args))
+        runner.relocate()
         runner.write_binary_memory("memory_files/execute_entry_point.rs.memory")
         runner.write_binary_trace("trace_files/execute_entry_point.rs.trace")
         return runner, syscall_handler
