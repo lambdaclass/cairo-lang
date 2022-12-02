@@ -279,8 +279,8 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         assert isinstance(args_ptr, RelocatableValue)  # Downcast.
         runner.mark_as_accessed(address=args_ptr, size=len(entry_points_args))
 
-        memory_file = open("memory_files/execute_entry_point{}.memory".format(call_number), "wb")
-        trace_file = open("trace_files/execute_entry_point{}.trace".format(call_number), "wb")
+        memory_file = open("memory_files/execute_entry_point_{}.memory".format(call_number), "wb")
+        trace_file = open("trace_files/execute_entry_point_{}.trace".format(call_number), "wb")
         field_bytes = math.ceil(contract_class.program.prime.bit_length() / 8)
         runner.relocate()
         write_binary_memory(memory_file, runner.relocated_memory, field_bytes)
