@@ -175,6 +175,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         Returns the corresponding CairoFunctionRunner and BusinessLogicSysCallHandler in order to
         retrieve the execution information.
         """
+        global call_number
         # Prepare input for Cairo function runner.
         class_hash = self._get_code_class_hash(state=state)
         contract_class = state.get_contract_class(class_hash=class_hash)
