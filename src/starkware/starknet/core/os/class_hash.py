@@ -31,6 +31,8 @@ from starkware.python.utils import safe_zip
 
 CAIRO_FILE = os.path.join(os.path.dirname(__file__), "contracts.cairo")
 
+call_number = 0
+
 class_hash_cache_ctx_var: ContextVar[Optional[cachetools.LRUCache]] = ContextVar(
     "class_hash_cache", default=None
 )
@@ -99,8 +101,9 @@ def compute_class_hash_inner(
     )
     _, class_hash = runner.get_return_values(2)
     runner.relocate()
-    runner.write_binary_memory("memory_files/class_hash.rs.memory")
-    runner.write_binary_trace("trace_files/class_hash.rs.trace")
+    runner.write_binary_memory("memory_files/class_hash_{}.rs.memory".format(call_number))
+    runner.write_binary_trace("trace_files/class_hash_{}.rs.trace".format(call_number))
+    call_number += 1
     return class_hash
 
 

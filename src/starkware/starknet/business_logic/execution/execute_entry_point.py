@@ -45,6 +45,8 @@ import cairo_rs_py
 
 logger = logging.getLogger(__name__)
 
+call_number = 0
+
 
 class ExecuteEntryPoint(ExecuteEntryPointBase):
     """
@@ -138,6 +140,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         contract storage, etc.) is saved on the resources manager.
         Returns a CallInfo object that represents the execution.
         """
+        global call_number
         previous_cairo_usage = resources_manager.cairo_usage
 
         runner, syscall_handler = self._run(
@@ -276,8 +279,9 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         # assert isinstance(args_ptr, RelocatableValue)  # Downcast.
         runner.mark_as_accessed(address=args_ptr, size=len(entry_points_args))
         runner.relocate()
-        runner.write_binary_memory("memory_files/execute_entry_point.rs.memory")
-        runner.write_binary_trace("trace_files/execute_entry_point.rs.trace")
+        runner.write_binary_memory("memory_files/execute_entry_point_{}.rs.memory".format(call_number))
+        runner.write_binary_trace("trace_files/execute_entry_point_{}.rs.trace".format(call_number))
+        call_number += 1
         return runner, syscall_handler
 
     def _get_selected_entry_point(
