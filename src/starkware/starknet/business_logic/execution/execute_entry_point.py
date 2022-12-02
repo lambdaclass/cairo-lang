@@ -9,7 +9,7 @@ from starkware.cairo.lang.vm.relocatable import RelocatableValue
 from starkware.cairo.lang.vm.security import SecurityError
 from starkware.cairo.lang.vm.utils import ResourcesError
 from starkware.cairo.lang.vm.vm_exceptions import HintException, VmException, VmExceptionBase
-from starkware.cairo.lang.vm.cairo_run import write_binary_memory
+from starkware.cairo.lang.vm.cairo_run import write_binary_memory, write_binary_trace
 import math
 from starkware.starknet.business_logic.execution.execute_entry_point_base import (
     ExecuteEntryPointBase,
@@ -276,10 +276,13 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         assert isinstance(args_ptr, RelocatableValue)  # Downcast.
         runner.mark_as_accessed(address=args_ptr, size=len(entry_points_args))
 
-        f = open("memory_files/execute_entry_point.memory", "wb")
+        memory_file = open("memory_files/execute_entry_point.memory", "wb")
+        trace_file = open("trace_files/execute_entry_point.trace", "wb")
         field_bytes = math.ceil(contract_class.program.prime.bit_length() / 8)
         runner.relocate()
-        write_binary_memory(f, runner.relocated_memory, field_bytes)
+        write_binary_memory(memory_file, runner.relocated_memory, field_bytes)
+        write_binary_trace(trace_file, runner.relocated_trace)
+
         return runner, syscall_handler
 
     def _get_selected_entry_point(

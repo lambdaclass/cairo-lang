@@ -7,7 +7,7 @@ import math
 from contextvars import ContextVar
 from functools import lru_cache
 from typing import Callable, List, Optional
-from starkware.cairo.lang.vm.cairo_run import write_binary_memory
+from starkware.cairo.lang.vm.cairo_run import write_binary_memory, write_binary_trace
 
 import cachetools
 
@@ -94,11 +94,15 @@ def compute_class_hash_inner(
         use_full_name=True,
         verify_secure=False,
     )
-    f = open("memory_files/class_hash.memory", "wb")
+    _, class_hash = runner.get_return_values(2)
+
+    memory_file = open("memory_files/class_hash.memory", "wb")
+    trace_file = open("trace_files/class_hash.trace", "wb")
     field_bytes = math.ceil(program.prime.bit_length() / 8)
     runner.relocate()
-    write_binary_memory(f, runner.relocated_memory, field_bytes)
-    _, class_hash = runner.get_return_values(2)
+    write_binary_memory(memory_file, runner.relocated_memory, field_bytes)
+    write_binary_trace(trace_file, runner.relocated_trace)
+    
     return class_hash
 
 
