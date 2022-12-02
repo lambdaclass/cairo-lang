@@ -28,6 +28,8 @@ from starkware.starknet.services.api.contract_class import ContractClass, EntryP
 
 CAIRO_FILE = os.path.join(os.path.dirname(__file__), "contracts.cairo")
 
+call_number = 0
+
 class_hash_cache_ctx_var: ContextVar[Optional[cachetools.LRUCache]] = ContextVar(
     "class_hash_cache", default=None
 )
@@ -96,13 +98,14 @@ def compute_class_hash_inner(
     )
     _, class_hash = runner.get_return_values(2)
 
-    memory_file = open("memory_files/class_hash.memory", "wb")
-    trace_file = open("trace_files/class_hash.trace", "wb")
+    memory_file = open("memory_files/class_hash_{}.memory".format(call_number), "wb")
+    trace_file = open("trace_files/class_hash_{}.trace".format(call_number), "wb")
     field_bytes = math.ceil(program.prime.bit_length() / 8)
     runner.relocate()
     write_binary_memory(memory_file, runner.relocated_memory, field_bytes)
     write_binary_trace(trace_file, runner.relocated_trace)
-    
+    call_number += 1
+
     return class_hash
 
 
