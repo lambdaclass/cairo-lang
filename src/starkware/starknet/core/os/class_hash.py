@@ -80,6 +80,7 @@ def compute_class_hash(
 def compute_class_hash_inner(
     contract_class: ContractClass, hash_func: Callable[[int, int], int]
 ) -> int:
+    global call_number
     program = load_program()
     contract_class_struct = get_contract_class_struct(
         identifiers=program.identifiers, contract_class=contract_class
