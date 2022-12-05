@@ -124,10 +124,11 @@ func fri_commit{
 
     return (
         commitment=new FriCommitment(
-        config=config,
-        inner_layers=inner_layer_commitments,
-        eval_points=eval_points,
-        last_layer_coefficients=coefficients),
+            config=config,
+            inner_layers=inner_layer_commitments,
+            eval_points=eval_points,
+            last_layer_coefficients=coefficients,
+        ),
     );
 }
 
@@ -228,10 +229,8 @@ func gather_first_layer_queries(
     // Translate the coset to the homogenous group to have simple FRI equations.
     let shifted_x_value = x_values[0] / FIELD_GENERATOR;
     assert fri_queries[0] = FriLayerQuery(
-        index=queries[0],
-        y_value=evaluations[0],
-        x_inv_value=1 / shifted_x_value,
-        );
+        index=queries[0], y_value=evaluations[0], x_inv_value=1 / shifted_x_value
+    );
 
     return gather_first_layer_queries(
         n_queries=n_queries - 1,
@@ -260,7 +259,8 @@ func fri_decommit_layers{range_check_ptr, blake2s_ptr: felt*, bitwise_ptr: Bitwi
     // Params.
     let (coset_size) = pow(2, step_sizes[0]);
     tempvar params: FriLayerComputationParams* = new FriLayerComputationParams(
-        coset_size=coset_size, fri_group=fri_group, eval_point=eval_points[0]);
+        coset_size=coset_size, fri_group=fri_group, eval_point=eval_points[0]
+    );
 
     // Allocate values for the next layer computation.
     let (next_queries: FriLayerQuery*) = alloc();
@@ -279,9 +279,8 @@ func fri_decommit_layers{range_check_ptr, blake2s_ptr: felt*, bitwise_ptr: Bitwi
 
     // Table decommitment.
     tempvar decommitment: TableDecommitment* = new TableDecommitment(
-        n_values=verify_y_values - verify_y_values_start,
-        values=verify_y_values_start,
-        );
+        n_values=verify_y_values - verify_y_values_start, values=verify_y_values_start
+    );
     table_decommit(
         commitment=commitment[0],
         n_queries=verify_indices - verify_indices_start,
