@@ -40,10 +40,8 @@ func modify_account{range_check_ptr}(state: AmmState, account_id, diff_a, diff_b
     let (local old_account: Account*) = dict_read{dict_ptr=account_dict_end}(key=account_id);
 
     // Compute the new account values.
-    tempvar new_token_a_balance = (
-        old_account.token_a_balance + diff_a);
-    tempvar new_token_b_balance = (
-        old_account.token_b_balance + diff_b);
+    tempvar new_token_a_balance = (old_account.token_a_balance + diff_a);
+    tempvar new_token_b_balance = (old_account.token_b_balance + diff_b);
 
     // Verify that the new balances are positive.
     assert_nn_le(new_token_a_balance, MAX_BALANCE);
@@ -64,8 +62,7 @@ func modify_account{range_check_ptr}(state: AmmState, account_id, diff_a, diff_b
     // Construct and return the new state with the updated
     // 'account_dict_end'.
     local new_state: AmmState;
-    assert new_state.account_dict_start = (
-        state.account_dict_start);
+    assert new_state.account_dict_start = (state.account_dict_start);
     assert new_state.account_dict_end = account_dict_end;
     assert new_state.token_a_balance = state.token_a_balance;
     assert new_state.token_b_balance = state.token_b_balance;
@@ -114,8 +111,7 @@ func swap{range_check_ptr}(state: AmmState, transaction: SwapTransaction*) -> (s
 
     // Update the state.
     local new_state: AmmState;
-    assert new_state.account_dict_start = (
-        state.account_dict_start);
+    assert new_state.account_dict_start = (state.account_dict_start);
     assert new_state.account_dict_end = state.account_dict_end;
     assert new_state.token_a_balance = new_x;
     assert new_state.token_b_balance = new_y;

@@ -11,6 +11,7 @@ from starkware.cairo.lang.vm.utils import ResourcesError
 from starkware.cairo.lang.vm.vm_exceptions import HintException, VmException, VmExceptionBase
 from starkware.cairo.lang.vm.cairo_run import write_binary_memory, write_binary_trace
 import math
+from starkware.python.utils import to_bytes
 from starkware.starknet.business_logic.execution.execute_entry_point_base import (
     ExecuteEntryPointBase,
 )
@@ -48,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 call_number = 0
 
+FAULTY_CLASS_HASH = to_bytes(0x1A7820094FEAF82D53F53F214B81292D717E7BB9A92BB2488092CD306F3993F)
 
 class ExecuteEntryPoint(ExecuteEntryPointBase):
     """
@@ -178,6 +180,13 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         global call_number
         # Prepare input for Cairo function runner.
         class_hash = self._get_code_class_hash(state=state)
+
+        # Hack to prevent version 0 attack on argent accounts.
+        if (tx_execution_context.version == 0) and (class_hash == FAULTY_CLASS_HASH):
+            raise StarkException(
+                code=StarknetErrorCode.TRANSACTION_FAILED, message="Fraud attempt blocked."
+            )
+
         contract_class = state.get_contract_class(class_hash=class_hash)
         contract_class.validate()
 
