@@ -41,6 +41,8 @@ from starkware.starkware_utils.error_handling import (
     stark_assert,
     wrap_with_stark_exception,
 )
+
+from starkware.starknet.core.os.syscall_utils import HandlerException
 import cairo_rs_py
 
 logger = logging.getLogger(__name__)
@@ -260,6 +262,8 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
                 code=StarknetErrorCode.UNEXPECTED_FAILURE,
                 message="Got an unexpected exception during the execution of the transaction.",
             ) from exception
+        except HandlerException as exception:
+            raise StarkException(code=exception.stark_exception.code, message=str(exception.stark_exception.message)) from exception
 
         # Complete handler validations.
         os_utils.validate_and_process_os_context(
