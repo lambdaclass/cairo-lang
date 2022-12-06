@@ -844,7 +844,7 @@ def get_salt(salt: Optional[str]) -> int:
     If salt is None, returns a random salt.
     """
     if salt is None:
-        return fields.ContractAddressSalt.get_random_value()
+        return 1
 
     return parse_hex_arg(arg=salt, arg_name="salt")
 
