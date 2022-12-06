@@ -60,6 +60,8 @@ from starkware.starknet.wallets.account import DEFAULT_ACCOUNT_DIR, Account
 from starkware.starknet.wallets.starknet_context import StarknetContext
 from starkware.starkware_utils.error_handling import StarkErrorCode
 
+custom_salt = 0
+
 NETWORKS = {
     "alpha-goerli": "alpha4.starknet.io",
     "alpha-goerli2": "alpha4-2.starknet.io",
@@ -839,12 +841,14 @@ def parse_hex_arg(arg: str, arg_name: str) -> int:
 
 
 def get_salt(salt: Optional[str]) -> int:
+    global custom_salt
+    custom_salt +=1
     """
     Validates the given salt and returns it as an integer.
     If salt is None, returns a random salt.
     """
     if salt is None:
-        return 1
+        return custom_salt
 
     return parse_hex_arg(arg=salt, arg_name="salt")
 
