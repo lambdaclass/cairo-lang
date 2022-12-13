@@ -268,13 +268,13 @@ Got {type(ex).__name__} exception during the execution of {func_name}:
         n_ret_vals = n_explicit_ret_vals + n_implicit_ret_vals
         implicit_retvals = tuple(
             runner.get_range(
-                runner.get_ap() - n_ret_vals, n_implicit_ret_vals
+                runner.vm.run_context.ap - n_ret_vals, n_implicit_ret_vals
             )
         )
 
         explicit_retvals = tuple(
             runner.get_range(
-                runner.get_ap() - n_explicit_ret_vals, n_explicit_ret_vals
+                runner.vm.run_context.ap - n_explicit_ret_vals, n_explicit_ret_vals
             )
         )
 

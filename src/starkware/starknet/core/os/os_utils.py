@@ -71,7 +71,7 @@ def validate_and_process_os_context(
     """
     # CAIRO-RS VERSION
     try:
-        os_context_end = runner.get_ap() - 2
+        os_context_end = runner.vm.run_context.ap - 2
         stack_ptr = os_context_end
         # The returned values are os_context, retdata_size, retdata_ptr.
         stack_ptr = runner.get_builtins_final_stack(stack_ptr)
