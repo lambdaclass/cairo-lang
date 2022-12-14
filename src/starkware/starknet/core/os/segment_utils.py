@@ -23,7 +23,7 @@ def get_os_segment_ptr_range(
     # The returned values are os_context, retdata_size, retdata_ptr.
     # CAIRO-RS VERSION
     try:
-        os_context_end = runner.get_ap() - 2
+        os_context_end = runner.vm.run_context.ap - 2
     except:
     # ORIGINAL VERSION
         os_context_end = runner.vm.run_context.ap - 2
