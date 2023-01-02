@@ -3,7 +3,8 @@ from typing import List, Tuple
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.lang.vm.memory_dict import UnknownMemoryError
 from starkware.cairo.lang.vm.memory_segments import MemorySegmentManager
-from starkware.cairo.lang.vm.relocatable import MaybeRelocatable, RelocatableValue
+from cairo_rs_py import RelocatableValue
+from starkware.cairo.lang.vm.relocatable import MaybeRelocatable
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.public.abi import SYSCALL_PTR_OFFSET
 from starkware.starkware_utils.error_handling import stark_assert, wrap_with_stark_exception

@@ -25,6 +25,7 @@ from starkware.cairo.lang.compiler.ast.cairo_types import CairoType, TypeFelt, T
 from starkware.cairo.lang.compiler.identifier_definition import StructDefinition
 from starkware.cairo.lang.compiler.program import Program
 from starkware.cairo.lang.vm.memory_segments import MemorySegmentManager
+from cairo_rs_py import RelocatableValue
 from starkware.cairo.lang.vm.relocatable import MaybeRelocatable, RelocatableValue
 from starkware.python.utils import assert_exhausted, camel_to_snake_case, safe_zip, to_bytes
 from starkware.starknet.business_logic.execution.execute_entry_point_base import (

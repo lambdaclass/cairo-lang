@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import cairo_rs_py
 from typing import List, Optional, Tuple, cast
 
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
@@ -192,7 +193,13 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Run the specified contract entry point with given calldata.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(program=contract_class.program, layout="all")
+            runner = cairo_rs_py.CairoRunner(
+            program=contract_class.program.dumps(),
+            entrypoint=None,
+            layout="all",
+            proof_mode=False,
+        )
+        runner.initialize_function_runner()
         os_context = os_utils.prepare_os_context(runner=runner)
 
         validate_contract_deployed(state=state, contract_address=self.contract_address)
@@ -232,27 +239,23 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
                     "__usort_max_size": 2**20,
                     "__chained_ec_op_max_len": 1000,
                 },
-                run_resources=tx_execution_context.run_resources,
+                # run_resources=tx_execution_context.run_resources,
                 verify_secure=True,
             )
         except VmException as exception:
             code: ErrorCode = StarknetErrorCode.TRANSACTION_FAILED
-            if isinstance(exception.inner_exc, HintException):
-                hint_exception = exception.inner_exc
 
-                if isinstance(hint_exception.inner_exc, syscall_utils.HandlerException):
-                    stark_exception = hint_exception.inner_exc.stark_exception
-                    code = stark_exception.code
-                    called_contract_address = hint_exception.inner_exc.called_contract_address
-                    message_prefix = (
-                        f"Error in the called contract ({hex(called_contract_address)}):\n"
-                    )
-                    # Override python's traceback and keep the Cairo one of the inner exception.
-                    exception.notes = [message_prefix + str(stark_exception.message)]
-
+            if isinstance(exception.inner_exc, syscall_utils.HandlerException):
+                stark_exception = exception.inner_exc.stark_exception
+                code = stark_exception.code
+                called_contract_address = exception.inner_exc.called_contract_address
+                message_prefix = (
+                    f"Error in the called contract ({hex(called_contract_address)}):\n"
+                )
+                # Override python's traceback and keep the Cairo one of the inner exception.
+                exception.notes = [message_prefix + str(stark_exception.message)]
             if isinstance(exception.inner_exc, ResourcesError):
                 code = StarknetErrorCode.OUT_OF_RESOURCES
-
             raise StarkException(code=code, message=str(exception)) from exception
         except VmExceptionBase as exception:
             raise StarkException(
