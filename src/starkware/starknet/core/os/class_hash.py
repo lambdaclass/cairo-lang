@@ -1,4 +1,3 @@
-from ast import Tuple
 import contextlib
 import dataclasses
 import itertools
@@ -6,7 +5,7 @@ import json
 import os
 from contextvars import ContextVar
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cachetools
 import cairo_rs_py
