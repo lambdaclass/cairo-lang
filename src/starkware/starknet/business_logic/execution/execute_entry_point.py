@@ -228,7 +228,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         try:
             runner.run_from_entrypoint(
                 entry_point.offset,
-                *entry_points_args,
+                entry_points_args,
                 hint_locals={
                     "syscall_handler": syscall_handler,
                 },
