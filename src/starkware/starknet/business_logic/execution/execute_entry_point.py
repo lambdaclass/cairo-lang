@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, cast
 
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.lang.vm.cairo_pie import ExecutionResources
-from starkware.cairo.lang.vm.relocatable import RelocatableValue
+from cairo_rs_py import RelocatableValue
 from starkware.cairo.lang.vm.security import SecurityError
 from starkware.cairo.lang.vm.utils import ResourcesError
 from starkware.cairo.lang.vm.vm_exceptions import HintException, VmException, VmExceptionBase
