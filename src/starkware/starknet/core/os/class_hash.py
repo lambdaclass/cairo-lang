@@ -5,13 +5,12 @@ import json
 import os
 from contextvars import ContextVar
 from functools import lru_cache
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cachetools
+import cairo_rs_py
 
-from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.common.structs import CairoStructFactory, CairoStructProxy
-from starkware.cairo.lang.builtins.hash.hash_builtin_runner import HashBuiltinRunner
 from starkware.cairo.lang.cairo_constants import DEFAULT_PRIME
 from starkware.cairo.lang.compiler.ast.cairo_types import add_backward_compatibility_space
 from starkware.cairo.lang.compiler.cairo_compile import compile_cairo_files
@@ -23,6 +22,7 @@ from starkware.cairo.lang.vm.crypto import pedersen_hash
 from starkware.python.utils import from_bytes
 from starkware.starknet.public.abi import starknet_keccak
 from starkware.starknet.services.api.contract_class import ContractClass, EntryPointType
+from starkware.cairo.lang.vm.relocatable import MaybeRelocatable
 
 CAIRO_FILE = os.path.join(os.path.dirname(__file__), "contracts.cairo")
 
@@ -77,17 +77,17 @@ def compute_class_hash_inner(
     contract_class_struct = get_contract_class_struct(
         identifiers=program.identifiers, contract_class=contract_class
     )
-    runner = CairoFunctionRunner(program)
-
-    hash_builtin = HashBuiltinRunner(
-        name="custom_hasher", included=True, ratio=32, hash_func=hash_func
+    runner = cairo_rs_py.CairoRunner(
+        program=program.dumps(), entrypoint=None, layout="all", proof_mode=False
     )
-    runner.builtin_runners["hash_builtin"] = hash_builtin
-    hash_builtin.initialize_segments(runner)
+    runner.initialize_function_runner()
+    hash_ptr = runner.add_additional_hash_builtin()
 
-    runner.run(
+    run_function_runner(
+        runner,
+        program,
         "starkware.starknet.core.os.contracts.class_hash",
-        hash_ptr=hash_builtin.base,
+        hash_ptr=hash_ptr,
         contract_class=contract_class_struct,
         use_full_name=True,
         verify_secure=False,
@@ -194,3 +194,98 @@ def get_contract_class_struct(
         bytecode_length=len(contract_class.program.data),
         bytecode_ptr=contract_class.program.data,
     )
+
+def run_function_runner(
+    runner,
+    program,
+    func_name: str,
+    *args,
+    hint_locals: Optional[Dict[str, Any]] = None,
+    static_locals: Optional[Dict[str, Any]] = None,
+    verify_secure: Optional[bool] = None,
+    trace_on_failure: bool = False,
+    apply_modulo_to_args: Optional[bool] = None,
+    use_full_name: bool = False,
+    verify_implicit_args_segment: bool = False,
+    **kwargs,
+) -> Tuple[Tuple[MaybeRelocatable, ...], Tuple[MaybeRelocatable, ...]]:
+    """
+    Runs func_name(*args).
+    args are converted to Cairo-friendly ones using gen_arg.
+
+    Returns the return values of the function, splitted into 2 tuples of implicit values and
+    explicit values. Structs will be flattened to a sequence of felts as part of the returned
+    tuple.
+
+    Additional params:
+    verify_secure - Run verify_secure_runner to do extra verifications.
+    trace_on_failure - Run the tracer in case of failure to help debugging.
+    apply_modulo_to_args - Apply modulo operation on integer arguments.
+    use_full_name - Treat 'func_name' as a fully qualified identifier name, rather than a
+      relative one.
+    verify_implicit_args_segment - For each implicit argument, verify that the argument and the
+      return value are in the same segment.
+    """
+    assert isinstance(program, Program)
+    entrypoint = program.get_label(func_name, full_name_lookup=use_full_name)
+
+    structs_factory = CairoStructFactory.from_program(program=program)
+    func = ScopedName.from_string(scope=func_name)
+
+    full_args_struct = structs_factory.build_func_args(func=func)
+    all_args = full_args_struct(*args, **kwargs)
+
+    try:
+        runner.run_from_entrypoint(
+            entrypoint,
+            all_args,
+            typed_args=True,
+            hint_locals=hint_locals,
+            static_locals=static_locals,
+            verify_secure=verify_secure,
+            apply_modulo_to_args=apply_modulo_to_args,
+        )
+    except (VmException, SecurityError, AssertionError) as ex:
+        if trace_on_failure:  # Unreachable code
+            print(
+                f"""\
+Got {type(ex).__name__} exception during the execution of {func_name}:
+{str(ex)}
+"""
+            )
+            # trace_runner(runner=runner)
+        raise
+
+    # The number of implicit arguments is identical to the number of implicit return values.
+    n_implicit_ret_vals = structs_factory.get_implicit_args_length(func=func)
+    n_explicit_ret_vals = structs_factory.get_explicit_return_values_length(func=func)
+    n_ret_vals = n_explicit_ret_vals + n_implicit_ret_vals
+    implicit_retvals = tuple(
+        runner.get_range(runner.get_ap() - n_ret_vals, n_implicit_ret_vals)
+    )
+
+    explicit_retvals = tuple(
+        runner.get_range(runner.get_ap() - n_explicit_ret_vals, n_explicit_ret_vals)
+    )
+
+    # Verify the memory segments of the implicit arguments.
+    if verify_implicit_args_segment:
+        implicit_args = all_args[:n_implicit_ret_vals]
+        for implicit_arg, implicit_retval in safe_zip(implicit_args, implicit_retvals):
+            assert isinstance(
+                implicit_arg, RelocatableValue
+            ), f"Implicit arguments must be RelocatableValues, {implicit_arg} is not."
+            assert isinstance(implicit_retval, RelocatableValue), (
+                f"Argument {implicit_arg} is a RelocatableValue, but the returned value "
+                f"{implicit_retval} is not."
+            )
+            assert implicit_arg.segment_index == implicit_retval.segment_index, (
+                f"Implicit argument {implicit_arg} is not on the same segment as the returned "
+                f"{implicit_retval}."
+            )
+            assert implicit_retval.offset >= implicit_arg.offset, (
+                f"The offset of the returned implicit argument {implicit_retval} is less than "
+                f"the offset of the input {implicit_arg}."
+            )
+
+    return implicit_retvals, explicit_retvals
