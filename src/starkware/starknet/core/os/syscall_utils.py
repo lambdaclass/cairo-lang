@@ -179,6 +179,9 @@ class HandlerException(Exception):
 
     called_contract_address: int
     stark_exception: StarkException
+        
+    def __str__(self) -> str:
+        return self.stark_exception.message
 
 
 class SysCallHandlerBase(ABC):
