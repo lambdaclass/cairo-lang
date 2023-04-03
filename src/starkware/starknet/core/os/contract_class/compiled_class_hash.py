@@ -30,11 +30,13 @@ def _compute_compiled_class_hash_inner(compiled_class: CompiledClass) -> int:
     compiled_class_struct = get_compiled_class_struct(
         identifiers=program.identifiers, compiled_class=compiled_class
     )
-    runner = CairoFunctionRunner(program=program)
+    runner = CairoRunner(program=program.dumps(), entrypoint=None)
+    runner.initialize_function_runner(add_segment_arena_builtin=False)
+    poseidon_ptr = runner.get_poseidon_builtin_base()
 
     runner.run(
         "starkware.starknet.core.os.contract_class.compiled_class.compiled_class_hash",
-        poseidon_ptr=runner.poseidon_builtin.base,
+        poseidon_ptr=poseidon_ptr,
         compiled_class=compiled_class_struct,
         use_full_name=True,
         verify_secure=False,
