@@ -238,12 +238,6 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         # Fix the current resources usage, in order to calculate the usage of this run at the end.
         previous_cairo_usage = resources_manager.cairo_usage
 
-        # Create a dummy layout.
-        layout = dataclasses.replace(
-            STARKNET_LAYOUT_INSTANCE,
-            builtins={**STARKNET_LAYOUT_INSTANCE.builtins, "segment_arena": {}},
-        )
-
         # Prepare runner.
         entry_point = self._get_selected_entry_point(
             compiled_class=compiled_class, class_hash=class_hash
@@ -252,15 +246,10 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             entrypoint_builtins=as_non_optional(entry_point.builtins)
         )
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(
-                program=program,
-                layout=layout,
-                additional_builtin_factories=dict(
-                    segment_arena=lambda name, included: SegmentArenaBuiltinRunner(
-                        included=included
-                    )
-                ),
+            runner = CairoRunner(  # pylint: disable=no-member
+                program=program.dumps(), entrypoint=None
             )
+            runner.initialize_function_runner(add_segment_arena_builtin=True)
 
         # Prepare implicit arguments.
         implicit_args = os_utils.prepare_os_implicit_args(runner=runner, gas=self.initial_gas)
