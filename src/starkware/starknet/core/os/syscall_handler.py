@@ -683,15 +683,22 @@ class BusinessLogicSyscallHandler(SyscallHandlerBase):
         Validates that there were no out of bounds writes to read-only segments and marks
         them as accessed.
         """
-        assert self.segments is runner.segments, "Inconsistent segments."
         for segment_ptr, segment_size in self.read_only_segments:
-            used_size = self.segments.get_segment_used_size(segment_index=segment_ptr.segment_index)
+            # Check segment usage individually instead of comparing the whole MemorySegmentManager structures
+            assert segment_size == runner.segments.get_segment_size(
+                segment_ptr.segment_index
+            ), "Inconsistent segments."
+            used_size = self.segments.get_segment_used_size(
+                segment_index=segment_ptr.segment_index
+            )
+            assert used_size == runner.segments.get_segment_used_size(
+                segment_ptr.segment_index
+            ), "Inconsistent segments."
             stark_assert(
                 used_size == segment_size,
                 code=StarknetErrorCode.SECURITY_ERROR,
                 message="Out of bounds write to a read-only segment.",
             )
-
             runner.mark_as_accessed(address=segment_ptr, size=segment_size)
 
 
@@ -1532,16 +1539,22 @@ class DeprecatedBlSyscallHandler(DeprecatedSysCallHandlerBase):
         Validates that there were no out of bounds writes to read-only segments and marks
         them as accessed.
         """
-        assert self.segments is runner.segments, "Inconsistent segments."
-
         for segment_ptr, segment_size in self.read_only_segments:
-            used_size = self.segments.get_segment_used_size(segment_index=segment_ptr.segment_index)
+            # Check segment usage individually instead of comparing the whole MemorySegmentManager structures
+            assert segment_size == runner.segments.get_segment_size(
+                segment_ptr.segment_index
+            ), "Inconsistent segments."
+            used_size = self.segments.get_segment_used_size(
+                segment_index=segment_ptr.segment_index
+            )
+            assert used_size == runner.segments.get_segment_used_size(
+                segment_ptr.segment_index
+            ), "Inconsistent segments."
             stark_assert(
                 used_size == segment_size,
                 code=StarknetErrorCode.SECURITY_ERROR,
                 message="Out of bounds write to a read-only segment.",
             )
-
             runner.mark_as_accessed(address=segment_ptr, size=segment_size)
 
     def post_run(self, runner: CairoFunctionRunner, syscall_stop_ptr: MaybeRelocatable):
