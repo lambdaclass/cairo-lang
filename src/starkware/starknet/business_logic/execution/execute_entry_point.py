@@ -356,18 +356,15 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             )
         except VmException as exception:
             code: ErrorCode = StarknetErrorCode.TRANSACTION_FAILED
-            if isinstance(exception.inner_exc, HintException):
-                hint_exception = exception.inner_exc
-
-                if isinstance(hint_exception.inner_exc, syscall_utils.HandlerException):
-                    stark_exception = hint_exception.inner_exc.stark_exception
-                    code = stark_exception.code
-                    called_contract_address = hint_exception.inner_exc.called_contract_address
-                    message_prefix = (
-                        f"Error in the called contract ({hex(called_contract_address)}):\n"
-                    )
-                    # Override python's traceback and keep the Cairo one of the inner exception.
-                    exception.notes = [message_prefix + str(stark_exception.message)]
+            if isinstance(exception.inner_exc, syscall_utils.HandlerException):
+                stark_exception = exception.inner_exc.stark_exception
+                code = stark_exception.code
+                called_contract_address = exception.inner_exc.called_contract_address
+                message_prefix = (
+                    f"Error in the called contract ({hex(called_contract_address)}):\n"
+                )
+                # Override python's traceback and keep the Cairo one of the inner exception.
+                exception.notes = [message_prefix + str(stark_exception.message)]
 
             if isinstance(exception.inner_exc, ResourcesError):
                 code = StarknetErrorCode.OUT_OF_RESOURCES

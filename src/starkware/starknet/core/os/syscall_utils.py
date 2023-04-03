@@ -165,6 +165,8 @@ class HandlerException(Exception):
     called_contract_address: int
     stark_exception: StarkException
 
+    def __str__(self) -> str:
+        return self.stark_exception.message
 
 @contextlib.contextmanager
 def wrap_with_handler_exception(call: ExecuteEntryPointBase):
