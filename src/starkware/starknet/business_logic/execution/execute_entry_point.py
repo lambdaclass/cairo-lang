@@ -3,6 +3,7 @@ import dataclasses
 import functools
 import logging
 from typing import Any, Dict, List, Optional, Union, cast
+from cairo_rs_py import CairoRunner
 
 from services.everest.definitions.fields import format_felt_list
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
@@ -524,9 +525,8 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Prepare runner.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(
-                program=compiled_class.program, layout=STARKNET_LAYOUT_INSTANCE.layout_name
-            )
+            runner = CairoRunner(program=compiled_class.program.dumps(), entrypoint=None)
+            runner.initialize_function_runner(add_segment_arena_builtin=False)
 
         # Prepare implicit arguments.
         implicit_args = os_utils.prepare_os_implicit_args_for_version0_class(runner=runner)
