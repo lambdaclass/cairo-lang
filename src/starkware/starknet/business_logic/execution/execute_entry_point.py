@@ -341,7 +341,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         try:
             runner.run_from_entrypoint(
                 entry_point_offset,
-                *entry_point_args,
+                entry_point_args,
                 hint_locals=hint_locals,
                 static_locals={
                     "__find_element_max_size": 2**20,
