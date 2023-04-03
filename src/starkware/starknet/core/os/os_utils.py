@@ -77,12 +77,7 @@ def prepare_builtins(runner: CairoFunctionRunner) -> List[MaybeRelocatable]:
     """
     Initializes and returns the builtin segments.
     """
-    builtin_segments: List[MaybeRelocatable] = []
-    for builtin in runner.program.builtins:
-        builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
-        builtin_segments.extend(builtin_runner.initial_stack())
-
-    return builtin_segments
+    return runner.get_program_builtins_initial_stack()
 
 
 def validate_and_process_os_implicit_args(
