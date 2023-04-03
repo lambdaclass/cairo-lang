@@ -284,3 +284,98 @@ Got {type(ex).__name__} exception during the execution of {func_name}:
 
     def get_return_values(self, n_ret: int):
         return self.vm_memory.get_range(addr=self.vm.run_context.ap - n_ret, size=n_ret)
+
+def run_function_runner(
+    runner,
+    program,
+    func_name: str,
+    *args,
+    hint_locals: Optional[Dict[str, Any]] = None,
+    static_locals: Optional[Dict[str, Any]] = None,
+    verify_secure: Optional[bool] = None,
+    trace_on_failure: bool = False,
+    apply_modulo_to_args: Optional[bool] = None,
+    use_full_name: bool = False,
+    verify_implicit_args_segment: bool = False,
+    **kwargs,
+) -> Tuple[Tuple[MaybeRelocatable, ...], Tuple[MaybeRelocatable, ...]]:
+    """
+    Runs func_name(*args).
+    args are converted to Cairo-friendly ones using gen_arg.
+
+    Returns the return values of the function, splitted into 2 tuples of implicit values and
+    explicit values. Structs will be flattened to a sequence of felts as part of the returned
+    tuple.
+
+    Additional params:
+    verify_secure - Run verify_secure_runner to do extra verifications.
+    trace_on_failure - Run the tracer in case of failure to help debugging.
+    apply_modulo_to_args - Apply modulo operation on integer arguments.
+    use_full_name - Treat 'func_name' as a fully qualified identifier name, rather than a
+      relative one.
+    verify_implicit_args_segment - For each implicit argument, verify that the argument and the
+      return value are in the same segment.
+    """
+    assert isinstance(program, Program)
+    entrypoint = program.get_label(func_name, full_name_lookup=use_full_name)
+
+    structs_factory = CairoStructFactory.from_program(program=program)
+    func = ScopedName.from_string(scope=func_name)
+
+    full_args_struct = structs_factory.build_func_args(func=func)
+    all_args = full_args_struct(*args, **kwargs)  # pylint: disable=not-callable
+
+    try:
+        runner.run_from_entrypoint(
+            entrypoint,
+            args=all_args,
+            hint_locals=hint_locals,
+            static_locals=static_locals,
+            typed_args=True,
+            verify_secure=verify_secure,
+            apply_modulo_to_args=apply_modulo_to_args,
+        )
+    except (VmException, SecurityError, AssertionError) as ex:
+        if trace_on_failure:  # Unreachable code
+            print(
+                f"""\
+Got {type(ex).__name__} exception during the execution of {func_name}:
+{str(ex)}
+"""
+            )
+            # trace_runner(runner=runner)
+        raise
+
+    # The number of implicit arguments is identical to the number of implicit return values.
+    n_implicit_ret_vals = structs_factory.get_implicit_args_length(func=func)
+    n_explicit_ret_vals = structs_factory.get_explicit_return_values_length(func=func)
+    n_ret_vals = n_explicit_ret_vals + n_implicit_ret_vals
+    implicit_retvals = tuple(
+        runner.get_range(runner.get_ap() - n_ret_vals, n_implicit_ret_vals)
+    )
+
+    explicit_retvals = tuple(
+        runner.get_range(runner.get_ap() - n_explicit_ret_vals, n_explicit_ret_vals)
+    )
+
+    # Verify the memory segments of the implicit arguments.
+    if verify_implicit_args_segment:
+        implicit_args = all_args[:n_implicit_ret_vals]
+        for implicit_arg, implicit_retval in safe_zip(implicit_args, implicit_retvals):
+            assert isinstance(
+                implicit_arg, RelocatableValue
+            ), f"Implicit arguments must be RelocatableValues, {implicit_arg} is not."
+            assert isinstance(implicit_retval, RelocatableValue), (
+                f"Argument {implicit_arg} is a RelocatableValue, but the returned value "
+                f"{implicit_retval} is not."
+            )
+            assert implicit_arg.segment_index == implicit_retval.segment_index, (
+                f"Implicit argument {implicit_arg} is not on the same segment as the returned "
+                f"{implicit_retval}."
+            )
+            assert implicit_retval.offset >= implicit_arg.offset, (
+                f"The offset of the returned implicit argument {implicit_retval} is less than "
+                f"the offset of the input {implicit_arg}."
+            )
+
+    return implicit_retvals, explicit_retvals
