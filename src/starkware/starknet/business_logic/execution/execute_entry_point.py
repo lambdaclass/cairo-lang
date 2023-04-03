@@ -3,12 +3,12 @@ import dataclasses
 import functools
 import logging
 from typing import Any, Dict, List, Optional, Union, cast
-from cairo_rs_py import CairoRunner
+from cairo_rs_py import CairoRunner, RelocatableValue
 
 from services.everest.definitions.fields import format_felt_list
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.lang.vm.cairo_pie import ExecutionResources
-from starkware.cairo.lang.vm.relocatable import MaybeRelocatable, RelocatableValue
+from starkware.cairo.lang.vm.relocatable import MaybeRelocatable
 from starkware.cairo.lang.vm.security import SecurityError
 from starkware.cairo.lang.vm.utils import ResourcesError, RunResources
 from starkware.cairo.lang.vm.vm_exceptions import HintException, VmException, VmExceptionBase
@@ -353,7 +353,6 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
                 run_resources=run_resources,
                 verify_secure=True,
                 program_segment_size=program_segment_size,
-                allow_tmp_segments=allow_tmp_segments,
             )
         except VmException as exception:
             code: ErrorCode = StarknetErrorCode.TRANSACTION_FAILED
