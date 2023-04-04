@@ -269,7 +269,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Load the builtin costs; Cairo 1.0 programs are expected to end with a `ret` opcode
         # followed by a pointer to the builtin costs.
-        core_program_end_ptr = runner.program_base + len(runner.program.data)
+        core_program_end_ptr = runner.program_base + len(program.data)
         builtin_costs = [0, 0, 0, 0, 0]
         # Use allocate_segment to mark it as read-only.
         builtin_cost_ptr = syscall_handler.allocate_segment(data=builtin_costs)
