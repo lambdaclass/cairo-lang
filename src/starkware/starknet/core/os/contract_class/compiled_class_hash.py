@@ -1,4 +1,4 @@
-from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
+from cairo_rs_py import CairoRunner
 from starkware.starknet.core.os.contract_class.compiled_class_hash_utils import (
     get_compiled_class_struct,
     load_compiled_class_cairo_program,
