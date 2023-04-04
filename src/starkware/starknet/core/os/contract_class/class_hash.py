@@ -34,6 +34,8 @@ def _compute_class_hash_inner(contract_class: ContractClass) -> int:
     range_check_ptr = runner.get_range_check_builtin_base()
 
     run_function_runner(
+        runner,
+        program,
         "starkware.starknet.core.os.contract_class.contract_class.class_hash",
         poseidon_ptr=poseidon_ptr,
         range_check_ptr=range_check_ptr,
