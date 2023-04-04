@@ -73,12 +73,6 @@ def compute_deprecated_class_hash_inner(
     runner.initialize_function_runner(add_segment_arena_builtin=False)
     hash_ptr = runner.get_hash_builtin_base()
 
-    hash_builtin = HashBuiltinRunner(
-        name="custom_hasher", included=True, ratio=32, hash_func=hash_func
-    )
-    runner.builtin_runners["hash_builtin"] = hash_builtin
-    hash_builtin.initialize_segments(runner)
-
     run_function_runner(
         runner,
         program,
