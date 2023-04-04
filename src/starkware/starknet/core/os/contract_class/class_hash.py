@@ -1,4 +1,5 @@
-from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
+from cairo_rs_py import CairoRunner
+from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner, run_function_runner
 from starkware.starknet.core.os.contract_class.class_hash_utils import (
     get_contract_class_struct,
     load_contract_class_cairo_program,
@@ -27,12 +28,17 @@ def _compute_class_hash_inner(contract_class: ContractClass) -> int:
     contract_class_struct = get_contract_class_struct(
         identifiers=program.identifiers, contract_class=contract_class
     )
-    runner = CairoFunctionRunner(program=program)
+    runner = CairoRunner(program=program.dumps(), entrypoint=None)
+    runner.initialize_function_runner(add_segment_arena_builtin=False)
+    poseidon_ptr = runner.get_poseidon_builtin_base()
+    range_check_ptr = runner.get_range_check_builtin_base()
 
-    runner.run(
+    run_function_runner(
+        runner,
+        program,
         "starkware.starknet.core.os.contract_class.contract_class.class_hash",
-        poseidon_ptr=runner.poseidon_builtin.base,
-        range_check_ptr=runner.range_check_builtin.base,
+        poseidon_ptr=poseidon_ptr,
+        range_check_ptr=range_check_ptr,
         contract_class=contract_class_struct,
         use_full_name=True,
         verify_secure=False,

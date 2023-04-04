@@ -77,12 +77,7 @@ def prepare_builtins(runner: CairoFunctionRunner) -> List[MaybeRelocatable]:
     """
     Initializes and returns the builtin segments.
     """
-    builtin_segments: List[MaybeRelocatable] = []
-    for builtin in runner.program.builtins:
-        builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
-        builtin_segments.extend(builtin_runner.initial_stack())
-
-    return builtin_segments
+    return runner.get_program_builtins_initial_stack()
 
 
 def validate_and_process_os_implicit_args(
@@ -113,11 +108,8 @@ def validate_and_process_os_implicit_args(
 
 def validate_builtins(runner: CairoFunctionRunner, builtins_end: MaybeRelocatable, n_builtins: int):
     stack_ptr = builtins_end
-    for builtin in runner.program.builtins[::-1]:
-        builtin_runner = runner.builtin_runners[f"{builtin}_builtin"]
-        with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            stack_ptr = builtin_runner.final_stack(runner=runner, pointer=stack_ptr)
-
+    with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
+        stack_ptr = runner.get_builtins_final_stack(stack_ptr)
     builtins_start = stack_ptr
     assert builtins_start + n_builtins == builtins_end, "Bad returned builtins."
 

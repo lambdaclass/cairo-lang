@@ -3,11 +3,12 @@ import dataclasses
 import functools
 import logging
 from typing import Any, Dict, List, Optional, Union, cast
+from cairo_rs_py import CairoRunner, RelocatableValue
 
 from services.everest.definitions.fields import format_felt_list
 from starkware.cairo.common.cairo_function_runner import CairoFunctionRunner
 from starkware.cairo.lang.vm.cairo_pie import ExecutionResources
-from starkware.cairo.lang.vm.relocatable import MaybeRelocatable, RelocatableValue
+from starkware.cairo.lang.vm.relocatable import MaybeRelocatable
 from starkware.cairo.lang.vm.security import SecurityError
 from starkware.cairo.lang.vm.utils import ResourcesError, RunResources
 from starkware.cairo.lang.vm.vm_exceptions import HintException, VmException, VmExceptionBase
@@ -237,12 +238,6 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         # Fix the current resources usage, in order to calculate the usage of this run at the end.
         previous_cairo_usage = resources_manager.cairo_usage
 
-        # Create a dummy layout.
-        layout = dataclasses.replace(
-            STARKNET_LAYOUT_INSTANCE,
-            builtins={**STARKNET_LAYOUT_INSTANCE.builtins, "segment_arena": {}},
-        )
-
         # Prepare runner.
         entry_point = self._get_selected_entry_point(
             compiled_class=compiled_class, class_hash=class_hash
@@ -251,15 +246,10 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
             entrypoint_builtins=as_non_optional(entry_point.builtins)
         )
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(
-                program=program,
-                layout=layout,
-                additional_builtin_factories=dict(
-                    segment_arena=lambda name, included: SegmentArenaBuiltinRunner(
-                        included=included
-                    )
-                ),
+            runner = CairoRunner(  # pylint: disable=no-member
+                program=program.dumps(), entrypoint=None
             )
+            runner.initialize_function_runner(add_segment_arena_builtin=True)
 
         # Prepare implicit arguments.
         implicit_args = os_utils.prepare_os_implicit_args(runner=runner, gas=self.initial_gas)
@@ -279,7 +269,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Load the builtin costs; Cairo 1.0 programs are expected to end with a `ret` opcode
         # followed by a pointer to the builtin costs.
-        core_program_end_ptr = runner.program_base + len(runner.program.data)
+        core_program_end_ptr = runner.program_base + len(program.data)
         builtin_costs = [0, 0, 0, 0, 0]
         # Use allocate_segment to mark it as read-only.
         builtin_cost_ptr = syscall_handler.allocate_segment(data=builtin_costs)
@@ -351,7 +341,7 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
         try:
             runner.run_from_entrypoint(
                 entry_point_offset,
-                *entry_point_args,
+                entry_point_args,
                 hint_locals=hint_locals,
                 static_locals={
                     "__find_element_max_size": 2**20,
@@ -363,22 +353,18 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
                 run_resources=run_resources,
                 verify_secure=True,
                 program_segment_size=program_segment_size,
-                allow_tmp_segments=allow_tmp_segments,
             )
         except VmException as exception:
             code: ErrorCode = StarknetErrorCode.TRANSACTION_FAILED
-            if isinstance(exception.inner_exc, HintException):
-                hint_exception = exception.inner_exc
-
-                if isinstance(hint_exception.inner_exc, syscall_utils.HandlerException):
-                    stark_exception = hint_exception.inner_exc.stark_exception
-                    code = stark_exception.code
-                    called_contract_address = hint_exception.inner_exc.called_contract_address
-                    message_prefix = (
-                        f"Error in the called contract ({hex(called_contract_address)}):\n"
-                    )
-                    # Override python's traceback and keep the Cairo one of the inner exception.
-                    exception.notes = [message_prefix + str(stark_exception.message)]
+            if isinstance(exception.inner_exc, syscall_utils.HandlerException):
+                stark_exception = exception.inner_exc.stark_exception
+                code = stark_exception.code
+                called_contract_address = exception.inner_exc.called_contract_address
+                message_prefix = (
+                    f"Error in the called contract ({hex(called_contract_address)}):\n"
+                )
+                # Override python's traceback and keep the Cairo one of the inner exception.
+                exception.notes = [message_prefix + str(stark_exception.message)]
 
             if isinstance(exception.inner_exc, ResourcesError):
                 code = StarknetErrorCode.OUT_OF_RESOURCES
@@ -524,9 +510,8 @@ class ExecuteEntryPoint(ExecuteEntryPointBase):
 
         # Prepare runner.
         with wrap_with_stark_exception(code=StarknetErrorCode.SECURITY_ERROR):
-            runner = CairoFunctionRunner(
-                program=compiled_class.program, layout=STARKNET_LAYOUT_INSTANCE.layout_name
-            )
+            runner = CairoRunner(program=compiled_class.program.dumps(), entrypoint=None)
+            runner.initialize_function_runner(add_segment_arena_builtin=False)
 
         # Prepare implicit arguments.
         implicit_args = os_utils.prepare_os_implicit_args_for_version0_class(runner=runner)
