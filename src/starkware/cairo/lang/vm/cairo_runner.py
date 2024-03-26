@@ -17,6 +17,10 @@ from starkware.cairo.lang.builtins.bitwise.bitwise_builtin_runner import Bitwise
 from starkware.cairo.lang.builtins.ec.ec_op_builtin_runner import EcOpBuiltinRunner
 from starkware.cairo.lang.builtins.hash.hash_builtin_runner import HashBuiltinRunner
 from starkware.cairo.lang.builtins.keccak.keccak_builtin_runner import KeccakBuiltinRunner
+from starkware.cairo.lang.builtins.modulo.mod_builtin_runner import (
+    AddModBuiltinRunner,
+    MulModBuiltinRunner,
+)
 from starkware.cairo.lang.builtins.poseidon.poseidon_builtin_runner import PoseidonBuiltinRunner
 from starkware.cairo.lang.builtins.range_check.range_check_builtin_runner import (
     RangeCheckBuiltinRunner,
@@ -152,6 +156,12 @@ class CairoRunner:
                 ratio=self.layout.builtins["range_check96"].ratio,
                 inner_rc_bound=2**16,
                 n_parts=self.layout.builtins["range_check96"].n_parts,
+            ),
+            add_mod=lambda name, included: AddModBuiltinRunner(
+                included=included, instance_def=self.layout.builtins["add_mod"]
+            ),
+            mul_mod=lambda name, included: MulModBuiltinRunner(
+                included=included, instance_def=self.layout.builtins["mul_mod"]
             ),
             **additional_builtin_factories,
         )
@@ -512,6 +522,7 @@ class CairoRunner:
         """
         assert self.layout.rc_units is not None, "RC units should not be None in proof mode."
 
+        # TODO(Adi, 15/10/2020): Make sure that get_perm_range_check_limits is not called twice.
         rc_min, rc_max = self.get_perm_range_check_limits()
         rc_units_used_by_builtins = sum(
             builtin_runner.get_used_perm_range_check_units(self)
@@ -538,6 +549,9 @@ class CairoRunner:
             for builtin_runner in self.builtin_runners.values()
             for addr in builtin_runner.get_memory_accesses(self)
         }
+        if self.segments.zero_segment is not None:
+            for i in range(self.segments.zero_segment_size):
+                builtin_accessed_addresses.add(self.segments.zero_segment + i)
         return self.segments.get_memory_holes(
             accessed_addresses=self.accessed_addresses | builtin_accessed_addresses
         )
@@ -605,6 +619,7 @@ class CairoRunner:
 
     # Helper functions.
 
+    # TODO(Adi,25/11/2020): Consider returning validated_memory instead.
     @property
     def vm_memory(self) -> MemoryDict:
         return self.memory

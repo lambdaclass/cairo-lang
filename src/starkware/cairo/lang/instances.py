@@ -8,6 +8,7 @@ from starkware.cairo.lang.builtins.all_builtins import (
     BuiltinList,
 )
 from starkware.cairo.lang.builtins.bitwise.instance_def import BitwiseInstanceDef
+from starkware.cairo.lang.builtins.modulo.instance_def import ModInstanceDef
 from starkware.cairo.lang.builtins.ec.instance_def import EcOpInstanceDef
 from starkware.cairo.lang.builtins.hash.instance_def import PedersenInstanceDef
 from starkware.cairo.lang.builtins.instance_def import BuiltinInstanceDef
@@ -538,6 +539,18 @@ all_solidity_instance = CairoLayout(
             scalar_bits=252,
             scalar_limit=PRIME,
         ),
+        add_mod=ModInstanceDef(
+            ratio=32,
+            word_bit_len=3,
+            n_words=4,
+            batch_size=8,
+        ),
+        mul_mod=ModInstanceDef(
+            ratio=32,
+            word_bit_len=3,
+            n_words=4,
+            batch_size=8,
+        )
     ),
     n_trace_columns=27,
 )
