@@ -543,13 +543,13 @@ all_solidity_instance = CairoLayout(
             ratio=32,
             word_bit_len=3,
             n_words=4,
-            batch_size=8,
+            batch_size=1,
         ),
         mul_mod=ModInstanceDef(
             ratio=32,
             word_bit_len=3,
             n_words=4,
-            batch_size=8,
+            batch_size=1,
         )
     ),
     n_trace_columns=27,
